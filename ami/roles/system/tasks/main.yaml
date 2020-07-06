@@ -1,0 +1,53 @@
+- name: /etc/sysctl.conf
+  become: yes
+  copy:
+    src: etc_sysctl.conf
+    dest: /etc/sysctl.conf
+    owner: root
+    group: root
+    mode: "u=rw,g=r,o=r"
+
+- name: /etc/systemd/system.conf
+  become: yes
+  copy:
+    src: etc_systemd_system.conf
+    dest: /etc/systemd/system.conf
+    owner: root
+    group: root
+    mode: "u=rw,g=r,o=r"
+
+- name: /etc/systemd/user.conf
+  become: yes
+  copy:
+    src: etc_systemd_user.conf
+    dest: /etc/systemd/user.conf
+    owner: root
+    group: root
+    mode: "u=rw,g=r,o=r"
+
+- name: /etc/security/limits.conf
+  become: yes
+  copy:
+    src: etc_security_limits.conf
+    dest: /etc/security/limits.conf
+    owner: root
+    group: root
+    mode: "u=rw,g=r,o=r"
+
+- name: /etc/pam.d/common-session
+  become: yes
+  copy:
+    src: etc_pam.d_common-session
+    dest: /etc/pam.d/common-session
+    owner: root
+    group: root
+    mode: "u=rw,g=r,o=r"
+
+- name: /etc/pam.d/common-session-noninteractive
+  become: yes
+  copy:
+    src: etc_pam.d_common-session-noninteractive
+    dest: /etc/pam.d/common-session-noninteractive
+    owner: root
+    group: root
+    mode: "u=rw,g=r,o=r"

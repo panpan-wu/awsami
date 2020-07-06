@@ -1,0 +1,186 @@
+- name: "nginx: install dependency"
+  become: yes
+  apt:
+    name:
+      - build-essential
+      - checkinstall
+      - git
+      - libpcre3
+      - libpcre3-dev
+      - libssl-dev
+      - libtemplate-perl
+      - openssl
+      - perl
+      - python3-minimal
+      - tar
+      - zlib1g-dev
+    state: present
+    update_cache: true
+
+- name: "nginx: add user"
+  become: yes
+  user:
+    name: nginx
+
+- name: "nginx: set nginx download filename"
+  set_fact:
+    nginx_download_name: "nginx-{{ nginx_version }}"
+
+- name: "nginx: set nginx workdir"
+  set_fact:
+    nginx_workdir: "/tmp/nginx_install_workdir"
+
+- name: "nginx: create work directory"
+  file:
+    path: "{{ nginx_workdir }}"
+    state: directory
+
+- name: "nginx: install"
+  block:
+
+    - name: "nginx: install: download"
+      get_url:
+        url: "http://nginx.org/download/{{ nginx_download_name }}.tar.gz"
+        dest: "{{ nginx_workdir }}/{{ nginx_download_name }}.tar.gz"
+      register: nginx_source
+
+    - name: "nginx: install: unpack"
+      unarchive:
+        copy: no
+        dest: "{{ nginx_workdir }}/"
+        src: "{{ nginx_source.dest }}"
+
+    - name: "nginx: install: download nginx-module-vts"
+      git:
+        repo: "https://github.com/vozlt/nginx-module-vts.git"
+        dest: "{{ nginx_workdir }}/nginx-module-vts"
+        version: v0.1.18
+
+    - name: "nginx: install: configure"
+      command: >-
+        ./configure
+        --prefix=/etc/nginx
+        --sbin-path=/usr/sbin/nginx
+        --modules-path=/usr/lib/nginx/modules
+        --conf-path=/etc/nginx/nginx.conf
+        --error-log-path=/var/log/nginx/error.log
+        --http-log-path=/var/log/nginx/access.log
+        --pid-path=/var/run/nginx.pid
+        --lock-path=/var/run/nginx.lock
+        --http-client-body-temp-path=/var/cache/nginx/client_temp
+        --http-proxy-temp-path=/var/cache/nginx/proxy_temp
+        --http-fastcgi-temp-path=/var/cache/nginx/fastcgi_temp
+        --http-uwsgi-temp-path=/var/cache/nginx/uwsgi_temp
+        --http-scgi-temp-path=/var/cache/nginx/scgi_temp
+        --user=nginx
+        --group=nginx
+        --with-compat
+        --with-file-aio
+        --with-threads
+        --with-http_addition_module
+        --with-http_auth_request_module
+        --with-http_dav_module
+        --with-http_flv_module
+        --with-http_gunzip_module
+        --with-http_gzip_static_module
+        --with-http_mp4_module
+        --with-http_random_index_module
+        --with-http_realip_module
+        --with-http_secure_link_module
+        --with-http_slice_module
+        --with-http_ssl_module
+        --with-http_stub_status_module
+        --with-http_sub_module
+        --with-http_v2_module
+        --with-mail
+        --with-mail_ssl_module
+        --with-stream
+        --with-stream_realip_module
+        --with-stream_ssl_module
+        --with-stream_ssl_preread_module
+        --add-module={{ nginx_workdir }}/nginx-module-vts
+      args:
+        chdir: "{{ nginx_workdir }}/{{ nginx_download_name }}"
+
+    - name: "nginx: install: make"
+      make:
+        chdir: "{{ nginx_workdir }}/{{ nginx_download_name }}"
+
+    - name: "nginx: install: install"
+      become: yes
+      make:
+        chdir: "{{ nginx_workdir }}/{{ nginx_download_name }}"
+        target: install
+
+    - name: "nginx: install: create html directory"
+      become: yes
+      file:
+        path: /usr/share/nginx/html
+        state: directory
+
+    - name: "nginx: install: copy index.html"
+      become: yes
+      copy:
+        src: www/index.html
+        owner: root
+        group: root
+        mode: '0644'
+        dest: /usr/share/nginx/html/index.html
+
+    - name: "nginx: install: copy nginx.conf"
+      become: yes
+      copy:
+        src: conf/nginx.conf
+        owner: root
+        group: root
+        mode: '0644'
+        dest: /etc/nginx/nginx.conf
+
+    - name: "nginx: install: copy proxy_params"
+      become: yes
+      copy:
+        src: conf/proxy_params
+        owner: root
+        group: root
+        mode: '0644'
+        dest: /etc/nginx/proxy_params
+
+    - name: "nginx: install: copy conf.d"
+      become: yes
+      copy:
+        src: conf/conf.d
+        owner: root
+        group: root
+        mode: '0644'
+        dest: /etc/nginx
+
+    - name: "nginx: install: upload systemd nginx service file"
+      become: yes
+      copy:
+        src: services/nginx.systemd
+        dest: /lib/systemd/system/nginx.service
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: "nginx: install: enable systemd nginx service file"
+      become: yes
+      systemd:
+        daemon_reload: yes
+        name: nginx
+        state: restarted
+        enabled: yes
+
+- name: "nginx: copy logrotate config"
+  become: yes
+  copy:
+    src: logrotate/nginx
+    owner: root
+    group: root
+    mode: '0644'
+    dest: /etc/logrotate.d/nginx
+
+- name: "nginx: cleanup downloads"
+  file:
+    path: "{{ nginx_workdir }}"
+    state: absent

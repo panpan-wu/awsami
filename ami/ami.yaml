@@ -1,0 +1,5 @@
+- hosts: ami
+  roles:
+    # - system
+    # - supervisor
+    - nginx

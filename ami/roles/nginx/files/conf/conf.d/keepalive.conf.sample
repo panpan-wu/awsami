@@ -1,0 +1,20 @@
+upstream upstream_sample {
+    server 127.0.0.1:8000;
+    keepalive 100;
+}
+
+server {
+    listen       80;
+
+    location / {
+        include proxy_params;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        proxy_pass http://upstream_sample;
+    }
+
+    location /_nginx_status {
+        vhost_traffic_status_display;
+        vhost_traffic_status_display_format html;
+    }
+}

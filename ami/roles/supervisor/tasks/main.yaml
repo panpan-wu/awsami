@@ -1,0 +1,6 @@
+- name: supervisor
+  become: yes
+  apt:
+    name: supervisor
+    state: present
+    update_cache: true
