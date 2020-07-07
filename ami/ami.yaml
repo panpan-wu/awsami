@@ -2,4 +2,21 @@
   roles:
     # - system
     # - supervisor
-    - nginx
+    # - nginx
+    - telegraf
+  vars:
+    #telegraf_outputs:
+    #  - type: influxdb
+    #    config:
+    #      - urls = ["http://127.0.0.1:8086"]
+    #      - database = ""
+    #      - exclude_database_tag = true
+    #      - username = ""
+    #      - password = ""
+    telegraf_inputs_extra:
+      - type: nginx_vts
+        config:
+          - urls = ["http://localhost/_nginx_status/format/json"]
+    #telegraf_global_tags:
+    #  - tag_name: service
+    #    tag_value: notset
