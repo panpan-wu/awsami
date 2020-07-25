@@ -1,4 +1,4 @@
-- hosts: ami
+- hosts: default
   roles:
     # - system
     # - supervisor
@@ -13,10 +13,10 @@
     #      - exclude_database_tag = true
     #      - username = ""
     #      - password = ""
-    telegraf_inputs_extra:
-      - type: nginx_vts
-        config:
-          - urls = ["http://localhost/_nginx_status/format/json"]
-    #telegraf_global_tags:
-    #  - tag_name: service
-    #    tag_value: notset
+    #telegraf_inputs_extra:
+    #  - type: nginx_vts
+    #    config:
+    #      - urls = ["http://localhost/_nginx_status/format/json"]
+    telegraf_global_tags:
+      - tag_name: service
+        tag_value: notset
